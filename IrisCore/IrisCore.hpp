@@ -3,6 +3,8 @@
 //  Iris
 //
 //  Created by Ryan Landvater on 8/26/23.
+//  Copyright Ryan Landvater 2023-24
+//  All rights reserved.
 //
 
 #include <stdint.h>

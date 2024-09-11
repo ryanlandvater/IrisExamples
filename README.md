@@ -5,7 +5,7 @@ This is a part of the Iris whole slide imaging (WSI) platform written and mainta
 
 Iris Modules with examples are as follows:
 
- - Iris Core : a simple introduction to the basics of binding an Iris View and slide rendering surface to your whole slide viewer application
+ - **Iris Core** : a simple introduction to the basics of binding an Iris View and slide rendering surface to your whole slide viewer application
 	 - iOS implementation
 	 - ~~macOS implementation~~ PENDING CODE REVIEW
 	 - ~~Windows implementation~~ PENDING CODE REVIEW
