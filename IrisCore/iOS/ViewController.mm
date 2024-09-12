@@ -25,12 +25,6 @@
 // Import Iris
 #import "IrisCore.hpp"
 
-// Provide the application name for which
-// Iris Core Render Engine ill provide the scope rendering:
-Iris::ViewerCreateInfo ApplicationCreateInfo {
-    .ApplicationName = "Iris Slide Viewer"
-};
-
 // ~~~~~~ IrisView ObjectiveC++ API WRAPPER ~~~~~~~~
 // Iris View -> Per the Iris API, the Iris Viewer (Iris::Viewer) class
 // is the entry class and interface class for the Iris API.
@@ -39,9 +33,13 @@ Iris::ViewerCreateInfo ApplicationCreateInfo {
 // The only property needed is the Iris::Viewer handle.
 @interface IrisView : MTKView <UIDocumentPickerDelegate, PKCanvasViewDelegate>
 @property (unsafe_unretained, nonatomic) Iris::Viewer handle;
-- (void) bindSurface;
-- (void) unbindSurface;
-- (void) destroyViewer;
+// There are only 3 functionalities this wrapper should handle:
+// 1) initWithFrame (not re-defined here)
+- (void) bindSurface;    // Bind a surface 
+- (void) destroyViewer;  // Destroy viewer
+// ** If you wish, you could not override initWithFrame and 
+// fold all initialization routines into the bindSurface method.
+// My preference simply is to break them up into separate calls.
 @end
 @implementation IrisView
 
