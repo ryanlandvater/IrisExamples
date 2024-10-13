@@ -1,16 +1,19 @@
-//
-//  IrisTypes.hpp
-//  Iris
-//
-//  Created by Ryan Landvater on 8/26/23.
-//  Copyright Ryan Landvater 2023-24
-//  All rights reserved
-//
+/**
+ * @file IrisTypes.hpp
+ * @author Ryan Landvater
+ * @brief Iris Core API Types and Structure Definitions
+ * @version 2024.0.3
+ * @date 2023-08-26
+ * 
+ * @copyright Copyright (c) 2023-24
+ * Created by Ryan Landvater on 8/26/23.
+ * 
+ * \note ALL STRUCTURE Variables SHALL have variables named in cammelCase
+ * \note ALL CLASSES Variables SHALL have underscores with _cammelCase
+ * \note ALL LOCAL variables SHALL use lower-case snake_case
+ * 
+ */
 
-
-// ALL STRUCTURE Variables SHALL have variables named in cammelCase
-// ALL CLASSES Variables SHALL have underscores with _cammelCase
-// ALL LOCAL variables SHALL use lower-case snake_case
 
 #ifndef IrisTypes_h
 #define IrisTypes_h
@@ -70,86 +73,112 @@ using TileIndicies      = std::vector<TileIndex>;
 using TileIndexSet      = std::unordered_set<TileIndex>;
 using ImageIndicies     = std::vector<ImageIndex>;
 
-
+/**
+ * @brief Result flags returned by Iris as part of API calls.
+ * 
+ */
 enum Result {
     IRIS_SUCCESS = 0,
     IRIS_FAILURE = 1
 };
 
-/// Iris Buffer is a reference counted data object used to wrap datablocks. It can either strong reference or
-/// weak reference the underlying data. The buffer can also shift between weak and strong referrences
-/// if chosen; however, this is very dangerous obviously and you need to ensure you are tracking if you
-/// have switched from weak to strong or vice versa.
+/**
+ * @brief Reference counted data object used to wrap datablocks.
+ * 
+ * It can either strong reference or weak reference the underlying data. 
+ * The buffer can also shift between weak and strong referrences if chosen; 
+ * however, this is very dangerous obviously and you need to ensure you 
+ * are tracking if you have switched from weak to strong or vice versa.
+ */
 using Buffer = std::shared_ptr<class __INTERNAL__Buffer>;
-
-/// Iris Viewer Object is defines the API access point for calling applications.
-/// Calling applications interact with a viewer to render a scope, draw and interact
-/// with Iris Native User Interface Elements, and extend scope view functionality.
 using Viewer = std::shared_ptr<class  __INTERNAL__Viewer>;
+using Slide  = std::shared_ptr<class  __INTERNAL__Slide>;
 
-/// ViewerCreateInfo Structure defines necesary modificaitons to hte underlying
-/// rendering engine. This includes markup files for different scenes and callback
-/// methods taht can be called by the custom UI defined in the markup files. For
-/// example a UI that defines a button should provide a callback for what happens
-/// if that button is pressed.
+/**
+ * @brief Defines necesary runtime parameters for starting the Iris rendering engine.
+ * 
+ * @param ApplicationName informs the rendering engine of the calling application's name
+ * @param ApplicationVersion informs the engine of the calling application version
+ * @param ApplicationBundlePath provides the executable location. This is needed for runtime
+ * loading of application files such as UI markup files and shader code.
+ * 
+ */
 struct ViewerCreateInfo {
     const char*         ApplicationName;
     uint32_t            ApplicationVersion;
     const char*         ApplicationBundlePath;
-    FilePaths           UI_markups;
-    CallbackDict        UI_callbacks;
 };
+/**
+ * @brief  System specific binding information to configure Iris' rendering engine
+ * for the given operating system draw surface. 
+ * 
+ * Compilier macros control the structure's definition and backend implementation
+ * and thus define the nature of the OS draw surface handles.
+ *  - Windows: requires HINSTANCE and HWND handles from the WIN32 API
+ *  - Apple: macOS and iOS require a __bridge pointer to a CAMetalLayer
+ * 
+ */
 struct ViewerBindExternalSurfaceInfo {
-    const Viewer        viewer      = nullptr;
+    const Viewer        viewer      = nullptr;  
 #if defined _WIN32
-    HINSTANCE     instance          = NULL;
-    HWND          window            = NULL;
+    HINSTANCE           instance    = NULL;    
+    HWND                window      = NULL;    
 #elif defined __APPLE__
-    const void*         layer       = nullptr;
+    const void*         layer       = nullptr; 
 #endif
 };
-struct ViewerMouseMoved {
-    float               x_location  = 0.f;
-    float               y_location  = 0.f;
-    bool                L_pressed   = false;
-    bool                R_pressed   = false;
-    float               x_velocity  = 0.f;
-    float               y_velocity  = 0.f;
-};
-struct ViewerMouseEvent {
-    enum {
-        UNDEFINED_EVENT,
-        MOUSE_LEFT_DOWN,
-        MOUSE_LEFT_UP,
-        MOUSE_RIGHT_DOWN,
-        MOUSE_RIGHT_UP,
-        MOUSE_LEFT_CLICK,
-        MOUSE_RIGHT_CLICK,
-        MOSUE_LEFT_DOUBLE_CLICK,
-        MOUSE_RIGHT_DOUBLE_CLICK
-    }                   type        = UNDEFINED_EVENT;
-    float               x_location  = 0.f;
-    float               y_location  = 0.f;
-};
-struct ViewerMultigesture {
-    float               x_location  = 0.f;
-    float               y_location  = 0.f;
-    uint32_t            n_fingers   = 0;
-};
+/**
+ * @brief  Information to translate the rendered scope view as a fraction of the active
+ * view space with direction given by the sign.
+ * 
+ * An x translation value of 0.5 will shift the view to the right by half of the current
+ * view sapce while -1.0 will shift the scope view to the left by an entire screen.
+ * 
+ */
 struct ViewerTranslateScope {
     float               x_translate = 0.f;
     float               y_translate = 0.f;
     float               x_velocity  = 0.f;
     float               y_velocity  = 0.f;
 };
+/**
+ * @brief Information to change the zoom objective.
+ * 
+ * A positive zoom increment will increase the scope view 
+ * zoom while a negative increment will decrease the current zoom.
+ * 
+ */
 struct ViewerZoomScope {
     float               increment   = 0.f;
 };
+/**
+ * @brief Defines the image encoding format for an image annotation.
+ * 
+ */
 enum AnnotationFormat {
     ANNOTATION_FORMAT_UNDEFINED     = -1,
     ANNOTATION_FORMAT_PNG,
     ANNOTATION_FORMAT_JPEG,
 };
+/**
+ * @brief Structure defining requirements to create an image-based
+ * slide annotation.
+ * 
+ * The required information includes the location of the slide annotation
+ * on the slide and the size of the annotation. The offset locations are 
+ * fractions of the current view window (for example an annotation that
+ * starts in the middle of the current view would have an offset of 0.5)
+ * The engine will immediately begin rendering the image on top of the 
+ * rendered slide layers.
+ * 
+ * @param format the AnnotationFormat of the image data to be rendered
+ * @param x_offset the x_offset of the current scope view window where the image starts [0,1.f]
+ * @param y_offset the x_offset of the current scope view window where the image starts [0,1.f]
+ * @param width the number of horizontal pixels in the image annotation
+ * @param height the number of vertical pixels in the image annotation
+ * @param data the encoded pixel data that comprises the image, width wide and hight tall
+ * 
+ */
 struct SlideAnnotation {
     AnnotationFormat    format      = ANNOTATION_FORMAT_UNDEFINED;
     float               x_offset    = 0.f;
@@ -158,25 +187,43 @@ struct SlideAnnotation {
     float               height      = 0.f;
     Buffer              data;
 };
-struct ViewerMeasureSlide {
-    float               x_start     = 0.f;
-    float               y_start     = 0.f;
-    float               x_end       = 0.f;
-    float               y_end       = 0.f;
-};
-
+/**
+ * @brief  Slide objective layer extent detailing the extent of each objective layer in
+ * the number of 256 pixel tiles in each dimension.  
+ * 
+ * The relative scale (zoom amount) as well as how downsampled the layer is relative to 
+ * the highest zoom layer (the reciprocal of the scale).
+ * 
+ * @param xTiles Number of horizontal 256 pixel tiles
+ * @param yTiles Number of vertical 256 pixel tiles
+ * @param scale Zoom factor of this level
+ * @param downsample Reciprocal zoom factor relative to most zoomed layer (one at highest objective layer)
+ */
 struct LayerExtent {
-    uint32_t            xTiles      = 1;
-    uint32_t            yTiles      = 1;
+    uint32_t            xTiles      = 1; 
+    uint32_t            yTiles      = 1; 
     float               scale       = 1.f;
     float               downsample  = 1.f;
 };
 using LayerExtents = std::vector<LayerExtent>;
+/**
+ * @brief The extent, in pixels, of a whole side image file. 
+ * 
+ * These are in terms of the initial layer presented (most zoomed out layer).
+ * 
+ * @param width Base layer width extent in pixels
+ * @param height Base layer height extent in pixels
+ * @param layers Slide objective layer extent list
+ */
 struct Extent {
-    uint32_t            width       = 1;
-    uint32_t            height      = 1;
-    LayerExtents        layers;
+    uint32_t            width       = 1; 
+    uint32_t            height      = 1; 
+    LayerExtents        layers; 
 };
+/**
+ * @brief Image channel byte order in little-endian
+ * 
+ */
 enum Format {
     FORMAT_UNDEFINED,
     FORMAT_B8G8R8,
@@ -184,11 +231,10 @@ enum Format {
     FORMAT_B8G8R8A8,
     FORMAT_R8G8B8A8,
 };
-
-/// Iris Slide  encapsulates the slide data retrieval system used by Iris. It is the
-/// recommended access point for data that either uses or does not use the
-/// render engine and viewer. 
-using Slide = std::shared_ptr<class  __INTERNAL__Slide>;
+/**
+ * @brief Information to open a slide file located on a local volume.
+ * 
+ */
 struct LocalSlideOpenInfo {
     const char*         filePath;
     enum : uint8_t {
