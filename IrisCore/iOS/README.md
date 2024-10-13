@@ -6,18 +6,26 @@ An Iris View should be created that extends the functionality of a [Metal View /
 ```ObjectiveC
 @interface IrisView : MTKView <UIDocumentPickerDelegate, NSWindowDelegate>
 @property (unsafe_unretained, nonatomic) Iris::Viewer handle;
+- (instancetype) initWithFrame:(CGRect)frameRect;
+- (void) bindSurface;
+- (void) destroyViewer
 @end
 ```
-
 The Iris::Viewer can be initialized by creating the viewer instance. We provide information about the application we are writing to the underlying engine. The application bundle path is particularly important to access runtime resources. 
 ```ObjectiveC
-Iris::ViewerCreateInfo ViewerCreateInfo {
-	.ApplicationName        = [[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"] UTF8String],
-	.ApplicationVersion     = U32_CAST([[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"] integerValue]),
-	.ApplicationBundlePath  = [[[NSBundle mainBundle] resourcePath] UTF8String],
-};
-self = [super initWithFrame:frameRect];
-[self setHandle: Iris::create_viewer(ViewerCreateInfo)];
+- (instancetype) initWithFrame:(CGRect)frame
+{
+    Iris::ViewerCreateInfo viewer_create_info {
+        .ApplicationName = [[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"] UTF8String],
+        .ApplicationVersion = U32_CAST([[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"] integerValue]),
+        .ApplicationBundlePath = [[[NSBundle mainBundle] resourcePath] UTF8String],
+    };
+    
+	// Init MTKLayer
+    self = [super initWithFrame:frame];
+    [self setHandle: Iris::create_viewer(ViewerCreateInfo)];
+    return self;
+}
 ```
 
 The Iris::Viewer must bind the MKTView's underlying [CAMatalLayer](https://developer.apple.com/documentation/quartzcore/cametallayer), which is the Core Animation layer that Iris can render into to be displayed onscreen. This will allow the Iris Viewer to initialize the underlying rendering engine.
@@ -26,9 +34,19 @@ The Iris::Viewer must bind the MKTView's underlying [CAMatalLayer](https://devel
 {
     Iris::ViewerBindExternalSurfaceInfo bind_info {
         .viewer = self.handle,
+		// MTKLayer::self.layer = CAMetalLayer
         .layer  = (__bridge const void*) self.layer,
     };
 
     Iris::viewer_bind_external_surface (bind_info);
 }
 ```
+
+Iris will be initialized at this point. Because of how Apple's Automatic Reference Counter works, you must destroy the Iris::Viewer at program shutdown. This is because uses its own internal reference counting that was built to be used outside of Apple's platforms.
+```ObjectiveC
+- (void) destroyViewer
+{
+    if (self.handle != nullptr)
+        [self setHandle: nil];
+}
+``

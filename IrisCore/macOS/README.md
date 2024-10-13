@@ -6,6 +6,9 @@ An Iris View should be created that extends the functionality of a [Metal View /
 ```ObjectiveC
 @interface IrisView : MTKView <UIDocumentPickerDelegate, NSWindowDelegate>
 @property (unsafe_unretained, nonatomic) Iris::Viewer handle;
+- (instancetype) initWithFrame:(NSRect)frameRect;
+- (void) bindSurface;
+- (void) destroyViewer
 @end
 ```
 
