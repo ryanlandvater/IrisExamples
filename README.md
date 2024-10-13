@@ -1,6 +1,6 @@
 # IrisExamples
 
-IrisExamples provides example implementations of the Iris Modules' API. 
+IrisExamples provides example implementations of the [Iris Modules' Application Programming Interface(API)](https://ryanlandvater.github.io). 
 This is a part of the Iris whole slide imaging (WSI) platform written and maintained by the authors of Iris, specifically Ryan Lanvater (me). 
 
 There are three (3) requirements for the successful implementation of Iris:
