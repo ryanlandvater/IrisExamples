@@ -14,7 +14,7 @@ Iris Modules with examples will be updated as more modules pass code review, man
  - **Iris Core** : a simple introduction to the basics of binding an Iris View and slide rendering surface to your whole slide viewer application
 	 - [iOS implementation](./IrisCore/iOS/)
 	 - [macOS implementation](./IrisCore/macOS/)
-	 - Windows implementation
+	 - [Windows implementation](./IrisCore/Windows/)
 	 
 	Iris Core is called from within the Iris:: namespace. Iris Core is implemented by constructing an **Iris::IrisViewer** ([IrisCore.hpp](IrisCore/IrisCore.hpp)) instance. An Iris Viewer is created by calling the **Iris::create_viewer(*create_viewer_info&*)** method ([IrisCore.hpp](IrisCore/IrisCore.hpp)) in an inactive state. The viewer is initalized once bound to a drawable surface, such as an operating system window, via **Iris::viewer_bind_external_surface(*bind_external_surface_info&*)** method ([IrisCore.hpp](IrisCore/IrisCore.hpp)). Calls to interface with the engine are made as part of the remaining API methods defined in [IrisCore.hpp](IrisCore/IrisCore.hpp), such as **viewer_engine_translate** or **viewer_engine_zoom** to control the scope view.
 
