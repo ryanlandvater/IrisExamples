@@ -4,8 +4,8 @@ The included file demonstrates how to extend the [UIViewController](https://deve
 
 The extension of the [UIViewController](https://developer.apple.com/documentation/uikit/uiviewcontroller) is the basic method for implementing custom code in an macOS application. This is achieved by overriding standard methods. 
 
-[!NOTE]
-The default method for initialization Apple proposes `UIViewController::viewDidLoad()` will incorrectly return the window dimensions to the MTKView / the render engine on retina displays when Iris binds the window surface. You must instead override `NSViewController::viewWillAppear()` for initialization instead for high-DPI monitors.
+>[!NOTE]
+>The default method for initialization Apple proposes `UIViewController::viewDidLoad()` will incorrectly return the window dimensions to the MTKView / the render engine on retina displays when Iris binds the window surface. You must instead override `NSViewController::viewWillAppear()` for initialization instead for high-DPI monitors.
 
 An example of the initialization via overriding `NSViewController::viewWillAppear()` is shown below.
 ```ObjectiveC
