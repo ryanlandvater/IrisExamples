@@ -18,61 +18,7 @@
 #ifndef IrisTypes_h
 #define IrisTypes_h
 
-#define U8_CAST(X)          static_cast<uint8_t>(X)
-#define U16_CAST(X)         static_cast<uint16_t>(X)
-#define U32_CAST(X)         static_cast<uint32_t>(X)
-#define FLOAT_CAST(X)       static_cast<float>(X)
-#define BYTE_PTR_CAST(X)    static_cast<BYTE*>(X)
-#define VOID_PTR_CAST(X)    reinterpret_cast<void*>(X)
-#define ATOMIC(X)           std::atomic<X>
-#define TILE_PIX_LENGTH     256U
-#define TILE_PIX_FLOAT      256.f
-#define TILE_PIX_AREA       65536U
-#define TILE_PIX_BYTES_RGB  196608U
-#define TILE_PIX_BYTES_RGBA 262144U
-#define LAYER_STEP          4
-#define LAYER_STEP_FLOAT    4.f
-
 namespace Iris {
-using BYTE              = uint8_t;
-using BYTE_ARRAY        = std::vector<BYTE>;
-using CString           = std::vector<char>;
-using CStringList       = std::vector<const char*>;
-using LambdaPtr         = std::function<void()>;
-using LambdaPtrs        = std::vector<LambdaPtr>;
-using atomic_bool       = std::atomic<bool>;
-using atomic_byte       = std::atomic<uint8_t>;
-using atomic_sint8      = std::atomic<int8_t>;
-using atomic_uint8      = std::atomic<uint8_t>;
-using atomic_sint16     = std::atomic<int16_t>;
-using atomic_uint16     = std::atomic<uint16_t>;
-using atomic_sint32     = std::atomic<int32_t>;
-using atomic_uint32     = std::atomic<uint32_t>;
-using atomic_sint64     = std::atomic<int64_t>;
-using atomic_uint64     = std::atomic<uint64_t>;
-using atomic_size       = std::atomic<size_t>;
-using atomic_float      = std::atomic<float>;
-using Threads           = std::vector<std::thread>;
-using Mutex             = std::mutex;
-using MutexLock         = std::unique_lock<Mutex>;
-using SharedMutexLock   = std::shared_ptr<MutexLock>;
-using SharedMutex       = std::shared_mutex;
-using ExclusiveLock     = std::unique_lock<SharedMutex>;
-using SharedLock        = std::shared_lock<SharedMutex>;
-using ReadLock          = std::shared_lock<SharedMutex>;
-using WriteLock         = std::unique_lock<SharedMutex>;
-using Notification      = std::condition_variable;
-using FilePaths         = std::vector<const char*>;
-using CallbackDict      = std::unordered_map<std::string, LambdaPtr>;
-using ViewerWeak        = std::weak_ptr<class __INTERNAL__Viewer>;
-
-using LayerIndex        = uint32_t;
-using TileIndex         = uint32_t;
-using ImageIndex        = uint32_t;
-using TileIndicies      = std::vector<TileIndex>;
-using TileIndexSet      = std::unordered_set<TileIndex>;
-using ImageIndicies     = std::vector<ImageIndex>;
-
 /**
  * @brief Result flags returned by Iris as part of API calls.
  * 
@@ -221,8 +167,10 @@ struct Extent {
     LayerExtents        layers; 
 };
 /**
- * @brief Image channel byte order in little-endian
+ * @brief Image channel byte order in little-endian format
  * 
+ * Assign this format to match the image source bits per
+ * pixel and bit-ordering. 
  */
 enum Format {
     FORMAT_UNDEFINED,
@@ -234,9 +182,20 @@ enum Format {
 /**
  * @brief Information to open a slide file located on a local volume.
  * 
+ * Provide the file location and the 
+ * 
  */
 struct LocalSlideOpenInfo {
     const char*         filePath;
+    /**
+     * @brief Local slide file encoding type
+     * 
+     * This informs the Iris::Slide object how it should
+     * attempt to open and map the slide file. If unknown,
+     * it will attempt both encoding sequences. OpenSlide
+     * is not supported on all platforms (iOS for example).
+     * 
+     */
     enum : uint8_t {
         SLIDE_TYPE_UNKNOWN,         // Unknown file encoding
         SLIDE_TYPE_IRIS,            // Iris Codec File
@@ -244,9 +203,34 @@ struct LocalSlideOpenInfo {
     }                   type        = SLIDE_TYPE_UNKNOWN;
     
 };
+/**
+ * @brief Information needed to open a server-hosted slide file.
+ * 
+ * This requires use of the Iris Networking module.
+ * 
+ */
 struct NetworkSlideOpenInfo {
     const char*         slideID;
 };
+/**
+ * @brief Parameters required to create an Iris::Slide WSI file handle.
+ * 
+ * This parameter structure is a wrapped union of either
+ * a local slide file open information struct or a network hosted
+ * slide file open information struct. To allow the system to access
+ * the correct union member, a type enumeration must also be defined
+ * prior to passing this information stucture to the calling method
+ * Iris::create_slide(const SlideOpenInfo&) or
+ * Iris::viewer_open_slide(const Viewer&, const SlideOpenInfo&)
+ * 
+ * Optional parameters that can be used to optimize performance
+ * characteristics are also included in the struct. Some are used interally
+ * by the Iris rendering engine, and these are invoked when using 
+ * Iris::viewer_open_slide(const Viewer&, const SlideOpenInfo&)
+ * rather than the more generic Iris::create_slide(const SlideOpenInfo&),
+ * so the former should be preferred when available.
+ * 
+ */
 struct SlideOpenInfo {
     enum : uint8_t {
         SLIDE_OPEN_UNDEFINED,           // Default / invalid file
@@ -254,29 +238,28 @@ struct SlideOpenInfo {
         SLIDE_OPEN_NETWORK,             // Sever hosted slide file
     }                   type            = SLIDE_OPEN_UNDEFINED;
     union {
+    /**
+     * @brief Information for opening a file on the local machine
+     */
     LocalSlideOpenInfo   local;
+    /**
+     * @brief Information for opening a network hosted file
+     */
     NetworkSlideOpenInfo network;
     };
     // ~~~~~~~~~~~~~ OPTIONAL FEATURES ~~~~~~~~~~~~~~~ //
-    // This is the default slide cache capacity
-    // it determines the number of allowed cached tiles.
-    // The default 1000 for RGBA images is 2 GB
+    /**
+     * @brief This is the default slide cache capacity
+     *
+     * The capacity determines the number of allowed cached tiles.
+     * This is the primary way in which Iris consumes RAM.
+     * Greater values cache more in-memory decompressed tile data
+     * for greater performance. Less require more pulls from
+     * disk (which is slower)
+     * The default 1000 for RGBA images consumes 2 GB of RAM.
+     */
     size_t               capacity       = 1000;
-    // Advanced efficiency feature to avoid loading
-    // stale / irrelevant tiles. Point to the current
-    // high-resolution layer. The slide will ignore
-    // any prior load requests that are not the
-    // high or low (HR-1) resolution layers.
-    atomic_uint32*       HR_index_ptr   = nullptr;
-    // Advanced efficiency feature. Notifies once a tile
-    // has been loaded into the slide tile cache and is
-    // ready for use. Useful for updating the view via
-    // informing a buffering thread that new data is available.
-    Notification*        notification   = nullptr;
 };
-
-typedef std::shared_ptr<class  __INTERNAL__Buffer> Buffer;
-
+using LambdaPtr         = std::function<void()>;
+using LambdaPtrs        = std::vector<LambdaPtr>;
 } // END IRIS NAMESPACE
-
-#endif /* IrisTypes_h */

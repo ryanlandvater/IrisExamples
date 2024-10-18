@@ -53,7 +53,7 @@
     // Provide the Application bundle path (the local path) for loading runtime files (REQUIRED).
     Iris::ViewerCreateInfo viewer_create_info {
         .ApplicationName = [[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"] UTF8String],
-        .ApplicationVersion = U32_CAST([[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"] integerValue]),
+        .ApplicationVersion = static_cast<uint32_t>([[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"] integerValue]),
         .ApplicationBundlePath = [[[NSBundle mainBundle] resourcePath] UTF8String],
     };
     
@@ -164,11 +164,11 @@
         Iris::SlideAnnotation slide_annotation {
             .format     = Iris::ANNOTATION_FORMAT_PNG, // PNG in this example
             // Fractional x and y location within the screen (self.frame.size) [0.0->1.0]
-            .x_offset   = FLOAT_CAST(__drawing.bounds.origin.x   / self.frame.size.width), // X location
-            .y_offset   = FLOAT_CAST(__drawing.bounds.origin.y   / self.frame.size.height),// Y location
+            .x_offset   = static_cast<float>(__drawing.bounds.origin.x   / self.frame.size.width), // X location
+            .y_offset   = static_cast<float>(__drawing.bounds.origin.y   / self.frame.size.height),// Y location
             // Fractional size of the drawing within the screen ((self.frame.size) [0.0->1.0]
-            .width      = FLOAT_CAST(__drawing.bounds.size.width / self.frame.size.width),
-            .height     = FLOAT_CAST(__drawing.bounds.size.height / self.frame.size.height),
+            .width      = static_cast<float>(__drawing.bounds.size.width / self.frame.size.width),
+            .height     = static_cast<float>(__drawing.bounds.size.height / self.frame.size.height),
             // Byte pixel array
             .data       = data
         };
@@ -198,15 +198,15 @@
     // Provide the translate scope information (X/Y and displacement/velocity)
     Iris::ViewerTranslateScope translate_scope {
         // Get the translocation x location relative to the screen size [0.0->1.0]
-        .x_translate = FLOAT_CAST(translation.x/frame.size.width) *
+        .x_translate = static_cast<float>(translation.x/frame.size.width) *
         // This below line moves the slide further based upon swipe velocity
         // I find that uses prefer saccade like movements to more quickly across the slide
-                        (std::pow(FLOAT_CAST(velocity.x/frame.size.width)/3.f,2.f)+1),
-        .y_translate = FLOAT_CAST(translation.y/frame.size.height) *
-                        (std::pow(FLOAT_CAST(velocity.y/frame.size.height)/3.f,2.f)+1),
+                        (std::pow(static_cast<float>(velocity.x/frame.size.width)/3.f,2.f)+1),
+        .y_translate = static_cast<float>(translation.y/frame.size.height) *
+                        (std::pow(static_cast<float>(velocity.y/frame.size.height)/3.f,2.f)+1),
         // Get the relative velocity normalized to screen size
-        .x_velocity  = FLOAT_CAST(velocity.x/frame.size.width),
-        .y_velocity  = FLOAT_CAST(velocity.y/frame.size.height),
+        .x_velocity  = static_cast<float>(velocity.x/frame.size.width),
+        .y_velocity  = static_cast<float>(velocity.y/frame.size.height),
     };
     
     // Reset the recognizer's origin point so that each call is relative to previous
@@ -221,7 +221,7 @@
 {
     // Divide the velocity by a scale to slow it down. 1.5e2 is an empiric value.
     Iris::viewer_engine_zoom(self.handle, Iris::ViewerZoomScope {
-        .increment  = FLOAT_CAST(recognizer.velocity/recognizer.scale/1.5e2),
+        .increment  = static_cast<float>(recognizer.velocity/recognizer.scale/1.5e2),
     });
 }
 @end
@@ -330,5 +330,4 @@
     if ([self.view isKindOfClass:[IrisView class]])
         [(IrisView*)self.view destroyViewer];
 }
-
 @end

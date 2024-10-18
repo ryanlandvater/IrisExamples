@@ -81,7 +81,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         .ApplicationBundlePath   = ASCI_path.c_str(),
     };  
     Iris::Viewer viewer = Iris::create_viewer(viewer_info);
-    
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Create the Window to house the Viewer    //
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
@@ -175,8 +175,6 @@ ATOM RegisterWin32Window(HINSTANCE hInstance)
 //   FUNCTION: open_slide_file (HWND  Iris::Viewer&)
 //
 //   PURPOSE: Create a open file dialog for use in opening slide files
-//
-//   COMMENTS:
 //
 //
 const COMDLG_FILTERSPEC slide_filter[]{
@@ -352,7 +350,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         // (always a uint16_t and a factor of 120; interpret it by factors of 0.1f)
         // Pass this to the engine to zoom. We will expand on this in the UI module.
         Iris::viewer_engine_zoom(viewer, Iris::ViewerZoomScope{
-            .increment = FLOAT_CAST(GET_WHEEL_DELTA_WPARAM(wParam)) / 1200.f
+            .increment = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / 1200.f
         });
     } break;
     case WM_POINTERDOWN: {

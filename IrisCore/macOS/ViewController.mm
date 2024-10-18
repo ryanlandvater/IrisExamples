@@ -118,7 +118,7 @@ struct TouchTracker {
     // Provide the Application bundle path (the local path) for loading runtime files (REQUIRED).
     Iris::ViewerCreateInfo ViewerCreateInfo {
         .ApplicationName        = [[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"] UTF8String],
-        .ApplicationVersion     = U32_CAST([[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"] integerValue]),
+        .ApplicationVersion     = static_cast<uint32_t>([[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"] integerValue]),
         .ApplicationBundlePath  = [[[NSBundle mainBundle] resourcePath] UTF8String],
     };
     
@@ -203,15 +203,15 @@ struct TouchTracker {
 - (void) mouseDragged:(NSEvent *)event
 {
     Iris::viewer_engine_translate (self.handle, Iris::ViewerTranslateScope {
-        .x_translate = FLOAT_CAST(event.deltaX / self.frame.size.width),
-        .y_translate = FLOAT_CAST(event.deltaY / self.frame.size.height),
+        .x_translate = static_cast<float>(event.deltaX / self.frame.size.width),
+        .y_translate = static_cast<float>(event.deltaY / self.frame.size.height),
     });
 }
 // If a magnification gesture was interpreted by the window, change the scope zoom
 - (void) magnifyWithEvent:(NSEvent *)event
 {
     Iris::viewer_engine_zoom(self.handle, Iris::ViewerZoomScope {
-        .increment  = FLOAT_CAST(event.magnification),
+        .increment  = static_cast<float>(event.magnification),
     });
 }
 // If a touch event was capture
@@ -232,8 +232,8 @@ struct TouchTracker {
     // movement / translation calls (touchesMovedWithEvent)
     if (touches != 2) return;
     _tracker        = TouchTracker {
-        .x          = x / FLOAT_CAST(touches),
-        .y          = y / FLOAT_CAST(touches),
+        .x          = x / static_cast<float>(touches),
+        .y          = y / static_cast<float>(touches),
         .x_vel      = 0.f,
         .y_vel      = 0.f,
         .timestamp  = get_current_microsecond_timestamp()
@@ -257,8 +257,8 @@ struct TouchTracker {
         x += touch.normalizedPosition.x;
         y += touch.normalizedPosition.y;
     }
-    x /= FLOAT_CAST(touches); // Mean X location
-    y /= FLOAT_CAST(touches); // Mean Y location
+    x /= static_cast<float>(touches); // Mean X location
+    y /= static_cast<float>(touches); // Mean Y location
     t -= _tracker.timestamp;
 
     // Define the update (where we are now).
@@ -266,8 +266,8 @@ struct TouchTracker {
         .x          = x,
         .y          = y,
         .timestamp  = t,
-        .x_vel      = (_tracker.x_vel + (_tracker.x - x) / FLOAT_CAST(t / 1E7))/2.f,
-        .y_vel      = (_tracker.y_vel + (_tracker.y - y) / FLOAT_CAST(t / 1E7))/2.f,
+        .x_vel      = (_tracker.x_vel + (_tracker.x - x) / static_cast<float>(t / 1E7))/2.f,
+        .y_vel      = (_tracker.y_vel + (_tracker.y - y) / static_cast<float>(t / 1E7))/2.f,
     };
     // If the velocity was really high, set a max of 2.0f
     if (abs(update.x_vel) > 2.f) update.x_vel = 2.f;
@@ -293,8 +293,8 @@ struct TouchTracker {
         // Here is a simple example of handling slide movement
         // the 2.5f is an arbitrary / empiric scale factor 
        Iris::viewer_engine_translate(self.handle, Iris::ViewerTranslateScope {
-           .x_translate = - FLOAT_CAST(_tracker.x - x) * 2.5f,
-           .y_translate =   FLOAT_CAST(_tracker.y - y) * 2.5f,
+           .x_translate = - static_cast<float>(_tracker.x - x) * 2.5f,
+           .y_translate =   static_cast<float>(_tracker.y - y) * 2.5f,
        });
         #else
         // This is a more advanced translation technique that incorporates
