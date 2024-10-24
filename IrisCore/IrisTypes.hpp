@@ -14,7 +14,6 @@
  * 
  */
 
-
 #ifndef IrisTypes_h
 #define IrisTypes_h
 
@@ -23,35 +22,85 @@ namespace Iris {
  * @brief Result flags returned by Iris as part of API calls.
  * 
  */
-enum Result {
-    IRIS_SUCCESS = 0,
-    IRIS_FAILURE = 1
+enum Result : uint32_t {
+    IRIS_SUCCESS        = 0,
+    IRIS_FAILURE        = 0x00000001,
+    IRIS_UNINITIALIZED  = 0x00000002,
 };
-
+/**
+ * @brief Iris Buffer ownership strength to underlying data. A weak reference
+ * only wraps data blocks by reference but has no responsibility over the 
+ * creation or freeing of that datablock. Strong references have responsibility
+ * over the data backing the buffer and will free the memory on buffer destruction.
+ * 
+ * \note A weak buffer explicitly is forbidden from resizing the buffer as it *may*
+ * invalidate the original pointer.
+ * \warning Changing a strong to weak buffer **requires** the calling program
+ * take responsibility for the buffer data pointer. It is now that program's
+ * responsibility to free that data once finished or a memory leak will ensue.
+ * 
+ */
+enum BufferReferenceStrength {
+    /// @brief Only wraps access to the data. No ownership or ability to resize underlying pointer.
+    REFERENCE_WEAK      = 0,
+    /// @brief Full ownership. Will free data on buffer destruction. Can resize underlying pointer.
+    REFERENCE_STRONG    = 1,
+};
 /**
  * @brief Reference counted data object used to wrap datablocks.
- * 
- * It can either strong reference or weak reference the underlying data. 
- * The buffer can also shift between weak and strong referrences if chosen; 
- * however, this is very dangerous obviously and you need to ensure you 
+ *
+ * It can either strong reference or weak reference the underlying data.
+ * The buffer can also shift between weak and strong referrences if chosen;
+ * however, this is very dangerous obviously and you need to ensure you
  * are tracking if you have switched from weak to strong or vice versa.
+ *
+ * \note __INTERNAL__Buffer is an internally defined class. You may optionally
+ *  include it in your implementation; however, many class methods are unsafe
+ *  as they were created for exclusive use by Iris developers and use of these methods
+ *  comes with risk.
+ *
+ *  \warning Buffer is currently NOT safe for concurrent use on muplitple threads.
+ *  This will be fixed in future updates.
  */
 using Buffer = std::shared_ptr<class __INTERNAL__Buffer>;
-using Viewer = std::shared_ptr<class  __INTERNAL__Viewer>;
+/**
+ * @brief Access point to Iris API and controls all elements of Iris viewspace
+ * 
+ * The viewer the the primary control class that interfaces between external
+ * applications and their views, and the iris rendering system. It contains interface
+ * capabilities between external controllers, coordinates display presentations between
+ * external surfaces, and creates any user interface functionalities. It is created using
+ * the Iris::create_viewer(const Iris::ViewerCreateInfo&) method and initialized using
+ * the Iris::viewer_bind_external_surface(const Iris::ViewerBindExternalSurfaceInfo&) method.
+ * \sa ViewerCreateInfo and ViewerBindExternalSurfaceInfo
+ * 
+ * \note __INTERNAL__Viewer is an internally defined class and not externally exposed.
+ */
+using Viewer = std::shared_ptr <class __INTERNAL__Viewer>;
+/**
+ * @brief Handle to Slide File and Slide Loading Routines (Slide Loader)
+ * 
+ * The Slide object represents a mapped slide file and high-performance loading
+ * routines to bring slide data into RAM with limited overhead
+ */
 using Slide  = std::shared_ptr<class  __INTERNAL__Slide>;
 
 /**
  * @brief Defines necesary runtime parameters for starting the Iris rendering engine.
  * 
- * @param ApplicationName informs the rendering engine of the calling application's name
- * @param ApplicationVersion informs the engine of the calling application version
- * @param ApplicationBundlePath provides the executable location. This is needed for runtime
- * loading of application files such as UI markup files and shader code.
+ * These runtime parameters will be forwarded to the GPU for certain task tracking
+ * and the application bundle path (term from Apple's OS) is important for loading
+ * referenced / included runtime files.
  * 
+ * Additional runtime parameters will be added as needed in the future.
  */
 struct ViewerCreateInfo {
+    /// @brief Informs the rendering engine of the calling application's name
     const char*         ApplicationName;
+    /// @brief Informs the engine of the calling application version
     uint32_t            ApplicationVersion;
+    /// @brief provides the executable location. This is needed for runtime
+    /// loading of application files such as UI markup files and shader code.
     const char*         ApplicationBundlePath;
 };
 /**
@@ -82,9 +131,13 @@ struct ViewerBindExternalSurfaceInfo {
  * 
  */
 struct ViewerTranslateScope {
+    /// @brief Fraction of *horizontal* viewspace to translate [-1,1](-left, +right)
     float               x_translate = 0.f;
+    /// @brief Fraction of *vertical* viewspace to translate [-1,1](-left, +right)
     float               y_translate = 0.f;
+    /// @brief Horizontal translation velocity (suggested [0,2])
     float               x_velocity  = 0.f;
+    /// @brief Velocity of translation (suggested [0,2]) in the horizontal
     float               y_velocity  = 0.f;
 };
 /**
@@ -92,10 +145,18 @@ struct ViewerTranslateScope {
  * 
  * A positive zoom increment will increase the scope view 
  * zoom while a negative increment will decrease the current zoom.
+ * The zoom origin (x_location and y_location) defines the region
+ * around which to zoom. This is best set as either the cursor location
+ * or view center (0.5, 0.5).
  * 
  */
 struct ViewerZoomScope {
+    /// @brief Fraction of current zoom amount by which to increase or decrease
     float               increment   = 0.f;
+    /// @brief Horizontal location of zoom origin (towards or way from this point)
+    float               x_location  = 0.5f;
+    /// @brief Vertical location of zoom origin
+    float               y_location  = 0.5f;
 };
 /**
  * @brief Defines the image encoding format for an image annotation.
@@ -106,6 +167,9 @@ enum AnnotationFormat {
     ANNOTATION_FORMAT_PNG,
     ANNOTATION_FORMAT_JPEG,
 };
+/** \def SlideAnnotation::format
+ * The AnnotationFormat of the image data to be rendered
+ */
 /**
  * @brief Structure defining requirements to create an image-based
  * slide annotation.
@@ -116,21 +180,19 @@ enum AnnotationFormat {
  * starts in the middle of the current view would have an offset of 0.5)
  * The engine will immediately begin rendering the image on top of the 
  * rendered slide layers.
- * 
- * @param format the AnnotationFormat of the image data to be rendered
- * @param x_offset the x_offset of the current scope view window where the image starts [0,1.f]
- * @param y_offset the x_offset of the current scope view window where the image starts [0,1.f]
- * @param width the number of horizontal pixels in the image annotation
- * @param height the number of vertical pixels in the image annotation
- * @param data the encoded pixel data that comprises the image, width wide and hight tall
- * 
  */
 struct SlideAnnotation {
+    /// @brief AnnotationFormat of the image data to be rendered
     AnnotationFormat    format      = ANNOTATION_FORMAT_UNDEFINED;
+    /// @brief x-offset of the current scope view window where the image starts [0,1.f]
     float               x_offset    = 0.f;
+    /// @brief y-offset of the current scope view window where the image starts [0,1.f]
     float               y_offset    = 0.f;
+    /// @brief Number of horizontal (x) pixels in the image annotation
     float               width       = 0.f;
+    /// @brief Number of vertical (y) pixels in the image annotation
     float               height      = 0.f;
+    /// @brief Encoded pixel data that comprises the image, width wide and hight tall
     Buffer              data;
 };
 /**
@@ -139,16 +201,15 @@ struct SlideAnnotation {
  * 
  * The relative scale (zoom amount) as well as how downsampled the layer is relative to 
  * the highest zoom layer (the reciprocal of the scale).
- * 
- * @param xTiles Number of horizontal 256 pixel tiles
- * @param yTiles Number of vertical 256 pixel tiles
- * @param scale Zoom factor of this level
- * @param downsample Reciprocal zoom factor relative to most zoomed layer (one at highest objective layer)
  */
 struct LayerExtent {
+    /// @brief Number of horizontal 256 pixel tiles
     uint32_t            xTiles      = 1; 
+    /// @brief Number of vertical 256 pixel tiles
     uint32_t            yTiles      = 1; 
+    /// @brief How magnified this level is relative to the unmagnified size of the tissue
     float               scale       = 1.f;
+    /// @brief Reciprocal scale factor relative to the most zoomed level (for OpenSlide compatibility)
     float               downsample  = 1.f;
 };
 using LayerExtents = std::vector<LayerExtent>;
@@ -156,14 +217,13 @@ using LayerExtents = std::vector<LayerExtent>;
  * @brief The extent, in pixels, of a whole side image file. 
  * 
  * These are in terms of the initial layer presented (most zoomed out layer).
- * 
- * @param width Base layer width extent in pixels
- * @param height Base layer height extent in pixels
- * @param layers Slide objective layer extent list
  */
 struct Extent {
+    /// @brief Top (lowest power) layer width extent in screen pixels
     uint32_t            width       = 1; 
+    /// @brief Top (lowest power) layer height in screen pixels
     uint32_t            height      = 1; 
+    /// @brief Slide objective layer extent list
     LayerExtents        layers; 
 };
 /**
@@ -173,10 +233,15 @@ struct Extent {
  * pixel and bit-ordering. 
  */
 enum Format {
+    /// @brief Invalid format indicating a format was not selected
     FORMAT_UNDEFINED,
+    /// @brief 8-bit blue, 8-bit green, 8-bit red, no alpha
     FORMAT_B8G8R8,
+    /// @brief 8-bit red, 8-bit green, 8-bit blue, no alpha
     FORMAT_R8G8B8,
+    /// @brief 8-bit blue, 8-bit green, 8-bit red, 8-bit alpha
     FORMAT_B8G8R8A8,
+    /// @brief 8-bit red, 8-bit green, 8-bit blue, 8-bit alpha
     FORMAT_R8G8B8A8,
 };
 /**
@@ -197,9 +262,9 @@ struct LocalSlideOpenInfo {
      * 
      */
     enum : uint8_t {
-        SLIDE_TYPE_UNKNOWN,         // Unknown file encoding
-        SLIDE_TYPE_IRIS,            // Iris Codec File
-        SLIDE_TYPE_OPENSLIDE,       // Vendor specific file (ex SVS)
+        SLIDE_TYPE_UNKNOWN,         //< Unknown file encoding
+        SLIDE_TYPE_IRIS,            //< Iris Codec File
+        SLIDE_TYPE_OPENSLIDE,       //< Vendor specific file (ex SVS)
     }                   type        = SLIDE_TYPE_UNKNOWN;
     
 };
@@ -263,3 +328,5 @@ struct SlideOpenInfo {
 using LambdaPtr         = std::function<void()>;
 using LambdaPtrs        = std::vector<LambdaPtr>;
 } // END IRIS NAMESPACE
+
+#endif /* IrisTypes_h */
