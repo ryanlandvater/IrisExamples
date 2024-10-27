@@ -129,7 +129,7 @@ I prefer to add in sensitivity to movement velocity and to translate the view wi
 \Delta x = (x_{prev}-x) * \left(1+\frac{|v_x|^{4}}{10}\right)\\
 \Delta y = (y_{prev}-y) * \left(1+\frac{|v_y|^{4}}{10}\right)\\
 \lim_{v_x\to0}\Delta x = (x_{prev}-x)\\
-\lim_{v_y\to0}\Delta y = (y_{prev}-y)\\
+\lim_{v_y\to0}\Delta y = (y_{prev}-y)
 ```
 Finally, the tracker is set to the update to perpetuate the movements. We should not compare next movements to the original; rather they should always be compared to the previous location.
 ```C++
