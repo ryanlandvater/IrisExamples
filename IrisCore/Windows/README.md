@@ -116,20 +116,26 @@ We can then implement the drag-to-translate the scope view in the standard user 
 
 Next move to `case WM_LBUTTONDOWN:` where we implement the actual translation. Perform this action on mouse move only if the mouse is being held down (`(GetKeyState(VK_LBUTTON) & 0x8000) != 0`). We will again find the relative x and y-locations of the pointer but this time we will also calculate velocity of movement (previously it was zero as there was no prior movement):
 ```math
-\displaylines{v_x = \frac{x_{prev}-x}{\Delta t}\newline
-v_y = \frac{y_{prev}-y}{\Delta t}}
+\displaylines{
+v_x = \frac{x_{prev}-x}{\Delta t}\newline
+v_y = \frac{y_{prev}-y}{\Delta t}
+}
 ```
 We can then calculate the drag distance in each dimension and submit it to Iris for view translation ($\Delta x$ and $\Delta y$):
 ```math
+\displaylines{
 \Delta x = x_{prev}-x\newline
 \Delta y = y_{prev}-y
+}
 ```
 I prefer to add in sensitivity to movement velocity and to translate the view with greater magnitude when the user is moving the mouse quickly. This can be linearly or exponentially scaled and the below example is simply how I choose to implement this. All constants are empiric and you can certainly play around with these equations to get the responsiveness that matches how you would like your implementation to work. You will notice in the below implementation tracks the cursor movement 1:1 at low velocity.
 ```math
+\displaylines{
 \Delta x = (x_{prev}-x) * \left(1+\frac{|v_x|^{4}}{10}\right)\newline
 \Delta y = (y_{prev}-y) * \left(1+\frac{|v_y|^{4}}{10}\right)\newline
 \lim_{v_x\to0}\Delta x = (x_{prev}-x)\newline
 \lim_{v_y\to0}\Delta y = (y_{prev}-y)
+}
 ```
 Finally, the tracker is set to the update to perpetuate the movements. We should not compare next movements to the original; rather they should always be compared to the previous location.
 ```C++
