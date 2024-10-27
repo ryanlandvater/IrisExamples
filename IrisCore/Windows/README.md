@@ -114,7 +114,7 @@ struct InputTracker {
 ```
 We can then implement the drag-to-translate the scope view in the standard user interface `WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)` method. When the mouse is originally clicked, or a touch lands down on a touch-surface, record it, see `case WM_LBUTTONDOWN:`. This involves getting the window dimensions and the pixel location of the pointer to calculate the normalized / relative location of the pointer in the window (*Iris uses normalized float locations rather than raw pixel locations*). We will also save when this happens for calculating velocity.
 
-Next move to `case WM_LBUTTONDOWN:` where we implement the actual translation. Perform this action on mouse move only if the mouse is being held down (`(GetKeyState(VK_LBUTTON) & 0x8000) != 0`). We will again find the relative x and y-locations of the pointer but this time we will also calculate velocity of movement (previously it was zero as there was no prior movement):
+Next move to `case WM_MOUSEMOVE:` where we implement the actual translation. Perform this action on mouse move only if the mouse is being held down (`(GetKeyState(VK_LBUTTON) & 0x8000) != 0`). We will again find the relative x and y-locations of the pointer but this time we will also calculate velocity of movement (previously it was zero as there was no prior movement):
 ```math
 \displaylines{
 v_x = \frac{x_{prev}-x}{\Delta t}\newline
