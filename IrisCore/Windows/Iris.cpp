@@ -253,8 +253,29 @@ HRESULT open_slide_file(HWND hWnd, Iris::Viewer& viewer)
     return hr;
 }
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+//              USER INTERACTION CALLBACKS              //
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+// Build required methods and structures to track user interactions
+// 
+// Get the current time in milliseconds since the epoch
+long get_millisec_timestamp()
+{
+    auto ms_since_epoch = std::chrono::duration_cast<std::chrono::microseconds>
+        (std::chrono::system_clock::now().time_since_epoch());
+    return ms_since_epoch.count();
+}
+// Create an input tracker to track the location of the cursor over time
+// We will keep it in global scope for now but this could be added to the hWnd
+// as a property if desired (similarly to the way the viewer is stored).
+struct InputTracker {
+    float   x;
+    float   y;
+    float   x_vel;
+    float   y_vel;
+    long    timestamp;
+} tracker;
 
-//
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
 //  PURPOSE: Processes messages for the main window.
@@ -342,6 +363,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
         }
     } break;
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    //     Scope View Zooming       //
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //  
     case WM_POINTERWHEEL:
     case WM_POINTERHWHEEL:
     case WM_MOUSEWHEEL:
@@ -352,6 +376,62 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         Iris::viewer_engine_zoom(viewer, Iris::ViewerZoomScope{
             .increment = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / 1200.f
         });
+    } break;
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    //      DRAG SCOPE VIEW         //
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //  
+    case WM_LBUTTONDOWN: {
+        // Get the window dimension to normalize the tracker location
+        RECT __r;
+        GetWindowRect(hWnd, &__r);
+        float width = static_cast<float> (__r.right - __r.left);
+        float height = static_cast<float> (__r.bottom - __r.top);
+        // Get the current cursor location
+        POINTS pts = MAKEPOINTS(lParam);
+        // And set the tracker to this location
+        tracker.x = static_cast<float>(pts.x) / width;
+        tracker.y = static_cast<float>(pts.y) / height;
+        tracker.x_vel = 0;
+        tracker.y_vel = 0;
+        // Save the time this happened; it is used for calculating velocity
+        tracker.timestamp = get_millisec_timestamp();
+    } break;
+    case WM_MOUSEMOVE: {
+        // If the left mouse button is being held down, the view is being dragged.
+        if ((GetKeyState(VK_LBUTTON) & 0x8000) != 0) {
+            // Get the window dimension to normalize the tracker location
+            RECT __r;
+            GetWindowRect(hWnd, &__r);
+            float width = static_cast<float> (__r.right - __r.left);
+            float height = static_cast<float> (__r.bottom - __r.top);
+            // Get the current cursor location
+            POINTS pts = MAKEPOINTS(lParam);
+            // And set the tracker to this location
+            float x = static_cast<float>(pts.x) / width;
+            float y = static_cast<float>(pts.y) / height;
+            long dt = get_millisec_timestamp() - tracker.timestamp;
+            // Calculate the update. It gets the current locations, the current time, and velocities
+            InputTracker update{
+                .x = x,
+                .y = y,
+                .x_vel = (x - tracker.x) / static_cast<float>(dt / 1E7) / 2.f,
+                .y_vel = (y - tracker.y) / static_cast<float>(dt / 1E7) / 2.f,
+                .timestamp = get_millisec_timestamp(),
+            };
+            // Calculate the distance dragged during this event duration
+            Iris::viewer_engine_translate(viewer, Iris::ViewerTranslateScope{
+                // This x-translation calculation may seem confusing. An easy alternative is 
+                // .x_translate = (update.x - tracker.x), which will track cursor movement 1:1
+                // What is here is a personal preference that moves above 1:1 scaled with velocity
+                //                  1:1 normal          Times 1 + velocity^1.1 then scaled back by 5 to keep the effect under control
+                .x_translate = (update.x - tracker.x) * (std::pow(std::abs(update.x_vel), 4f) / 10.f + 1.f),
+                .y_translate = (update.y - tracker.y) * (std::pow(std::abs(update.y_vel), 4f) / 10.f + 1.f),
+                .x_velocity = update.x_vel,
+                .y_velocity = update.y_vel
+                });
+            // Set the new tracker to the update
+            tracker = update;
+        }
     } break;
     case WM_POINTERDOWN: {
         return DefWindowProc(hWnd, message, wParam, lParam);
