@@ -18,14 +18,30 @@
 #define IrisTypes_h
 
 namespace Iris {
-/**
- * @brief Result flags returned by Iris as part of API calls.
- * 
- */
-enum Result : uint32_t {
+enum ResultFlag : uint32_t {
     IRIS_SUCCESS        = 0,
     IRIS_FAILURE        = 0x00000001,
     IRIS_UNINITIALIZED  = 0x00000002,
+    RESULT_MAX_ENUM     = 0xFFFFFFFF,
+};
+/**
+ * @brief Result flags returned by Iris as part of API calls.
+ *
+ * 
+ *
+ */
+struct Result {
+    ResultFlag              flag = RESULT_MAX_ENUM;
+    std::string             message;
+    explicit Result         (){}
+    Result                  (const ResultFlag& __f) : flag(__f) {}
+    Result                  (const ResultFlag& __f, const std::string& __s) :
+                            flag (__f), message(__s){}
+    Result& operator =      (const ResultFlag& __f) {flag = __f; return *this;}
+    bool operator    ==     (const bool& __b) const {return flag == __b?IRIS_SUCCESS:IRIS_FAILURE;}
+    bool operator    !=     (const bool& __b) const {return flag != __b?IRIS_SUCCESS:IRIS_FAILURE;}
+    bool operator    ==     (const ResultFlag& __f) const  {return flag == __f;}
+    bool operator    !=     (const ResultFlag& __f) const  {return flag != __f;}
 };
 /**
  * @brief Iris Buffer ownership strength to underlying data. A weak reference
@@ -122,6 +138,13 @@ struct ViewerBindExternalSurfaceInfo {
     const void*         layer       = nullptr; 
 #endif
 };
+
+struct ViewerResizeSurfaceInfo {
+    const Viewer        viewer      = nullptr;
+    const uint32_t      width       = 0;
+    const uint32_t      height      = 0;
+};
+
 /**
  * @brief  Information to translate the rendered scope view as a fraction of the active
  * view space with direction given by the sign.
@@ -262,9 +285,9 @@ struct LocalSlideOpenInfo {
      * 
      */
     enum : uint8_t {
-        SLIDE_TYPE_UNKNOWN,         //< Unknown file encoding
-        SLIDE_TYPE_IRIS,            //< Iris Codec File
-        SLIDE_TYPE_OPENSLIDE,       //< Vendor specific file (ex SVS)
+        SLIDE_TYPE_UNKNOWN,         //*< Unknown file encoding
+        SLIDE_TYPE_IRIS,            //*< Iris Codec File
+        SLIDE_TYPE_OPENSLIDE,       //*< Vendor specific file (ex SVS)
     }                   type        = SLIDE_TYPE_UNKNOWN;
     
 };

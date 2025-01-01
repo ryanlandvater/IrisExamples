@@ -82,6 +82,7 @@ Result  viewer_bind_external_surface    (const ViewerBindExternalSurfaceInfo&) n
  */
 Result viewer_unbind_surface            (const Viewer& viewer) noexcept;
 
+Result viewer_window_will_resize        (const ViewerResizeSurfaceInfo& viewer) noexcept;
 /**
  * @brief Inform a viewer that the attached window was resized. 
  * 
