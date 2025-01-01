@@ -1,5 +1,5 @@
+<script type="text/javascript" src="//cdn.plu.mx/widget-popup.js"></script>
 # IrisExamples
-<em><script type="text/javascript" src="//cdn.plu.mx/widget-popup.js"></script></em>
 IrisExamples provides example implementations of the [Iris Modules' Application Programming Interface(API)](https://ryanlandvater.github.io). 
 This is a part of the Iris whole slide imaging (WSI) platform written and maintained by the authors of Iris, specifically Ryan Lanvater (me). 
 
@@ -25,5 +25,5 @@ Landvater, R. E. (2023).  _Patent No. US-20230334621-A1_. Retrieved from https:/
 
 Landvater, R., & Balis, U. (2024). As Fast as Glass: A Next Generation Digital Pathology Rendering Engine. United States and Canadian Academy of Pathology 113th Annual Meeting Abstracts.  _Laboratory Investigation_,  _104_(3), 101595. https://doi.org/10.1016/j.labinv.2024.101595
 
-<em><a href="https://plu.mx/plum/a/?doi=10.1016%2Fj.jpi.2024.100414" data-popup="right" data-size="large" class="plumx-plum-print-popup" data-site="plum" data-hide-when-empty="true">Iris: A Next Generation Digital Pathology Rendering Engine</a></em>
+<a href="https://plu.mx/plum/a/?doi=10.1016%2Fj.jpi.2024.100414" data-popup="right" data-size="large" class="plumx-plum-print-popup" data-site="plum" data-hide-when-empty="true">Iris: A Next Generation Digital Pathology Rendering Engine</a><l>
 Landvater, R. E., & Balis, U. (2025). Iris: A Next Generation Digital Pathology Rendering Engine. _Journal of Pathology Informatics_, _16_, 100414. https://doi.org/10.1016/j.jpi.2024.100414
