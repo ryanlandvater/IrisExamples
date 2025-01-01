@@ -24,3 +24,5 @@ For publications related to Iris and explaining the functionality / architecture
 Landvater, R. E. (2023).  _Patent No. US-20230334621-A1_. Retrieved from https://patents.google.com/patent/US20230334621A1
 
 Landvater, R., & Balis, U. (2024). As Fast as Glass: A Next Generation Digital Pathology Rendering Engine. United States and Canadian Academy of Pathology 113th Annual Meeting Abstracts.  _Laboratory Investigation_,  _104_(3), 101595. https://doi.org/10.1016/j.labinv.2024.101595
+
+Landvater, R. E., & Balis, U. (2025). Iris: A Next Generation Digital Pathology Rendering Engine. _Journal of Pathology Informatics_, _16_, 100414. https://doi.org/10.1016/j.jpi.2024.100414
